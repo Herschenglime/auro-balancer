@@ -1,0 +1,15 @@
+#+title: Notes
+
+* Dimensions for servo holder
+** Futaba (used by electronoobs)
+1.6" x 0.8"x 1.4" (41 x 20 x 36mm)
+** MG90s (what we have)
+main box part:
+12 x 21 x 32.5
+
+might be easier to screw servo into cardboard lol
+
+** Hinge attachment
+skewer is 3.8 mm, need 4.1mm hole roughly for the skewer
+
+attach peg is 5mm, so roughly 5.5 mm hole
