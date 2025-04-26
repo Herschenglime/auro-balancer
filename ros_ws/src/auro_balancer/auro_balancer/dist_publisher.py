@@ -1,7 +1,14 @@
+# ros imports
 import rclpy
 from rclpy.node import Node
 
 from std_msgs.msg import String
+
+# gpio imports
+import board
+import busio
+import adafruit_vl53l0x
+# import numpy as np
 
 
 class DistPublisher(Node):
@@ -12,9 +19,15 @@ class DistPublisher(Node):
         self.timer = self.create_timer(timer_period, self.timer_callback)
         self.i = 0
 
+        # setup distance sensor device
+        self.i2c = busio.I2C(board.SCL, board.SDA)
+        self.vl53 = adafruit_vl53l0x.VL53L0X(self.i2c)
+
+        # start = np.array([])
+
     def timer_callback(self):
         msg = String()
-        msg.data = "Hello World: %d" % self.i
+        msg.data = "Distance: %dmm" % self.vl53.range
         self.publisher_.publish(msg)
         self.get_logger().info('Publishing: "%s"' % msg.data)
         self.i += 1

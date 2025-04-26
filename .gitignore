@@ -17,3 +17,4 @@ yarn-error.log*
 ros_ws/build
 ros_ws/install
 ros_ws/log
+ros_ws/src/auro_balancer/auro_balancer/__pycache__
