@@ -14,3 +14,6 @@ yarn-error.log*
 
 
 *sync-conflict*
+ros_ws/build
+ros_ws/install
+ros_ws/log
