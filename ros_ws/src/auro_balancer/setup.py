@@ -18,6 +18,9 @@ setup(
     license="Apache-2.0",
     tests_require=["pytest"],
     entry_points={
-        "console_scripts": ["controller = auro_balancer.controller:main"],
+        "console_scripts": [
+            "dist_publisher = auro_balancer.dist_publisher:main",
+            "controller = auro_balancer.controller:main",
+        ],
     },
 )
