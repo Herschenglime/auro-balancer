@@ -2,7 +2,7 @@
 import rclpy
 from rclpy.node import Node
 
-from std_msgs.msg import String
+from std_msgs.msg import Int16
 
 # gpio imports
 import board
@@ -18,7 +18,7 @@ import time
 class DistPublisher(Node):
     def __init__(self):
         super().__init__("dist_publisher")
-        self.publisher_ = self.create_publisher(String, "topic", 10)
+        self.publisher_ = self.create_publisher(Int16, "dist_mm", 10)
 
         # setup distance sensor device
         self.i2c = busio.I2C(board.SCL, board.SDA)
@@ -34,10 +34,10 @@ class DistPublisher(Node):
     def publish_distance_loop(self):
         while self.running:
             distance = self.vl53.range
-            msg = String()
-            msg.data = f"Distance: {distance} mm"
+            msg = Int16()
+            msg.data = distance
             self.publisher_.publish(msg)
-            self.get_logger().info('Publishing: "%s"' % msg.data)
+            self.get_logger().info(f"Distance: {distance} mm")
 
             # Sleep a little bit to avoid spamming CPU
             time.sleep(0.001)  # 10ms sleep; adjust based on sensor update speed

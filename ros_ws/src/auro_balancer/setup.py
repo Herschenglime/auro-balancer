@@ -20,6 +20,7 @@ setup(
     entry_points={
         "console_scripts": [
             "dist_publisher = auro_balancer.dist_publisher:main",
+            "imu_publisher = auro_balancer.imu_publisher:main",
             "controller = auro_balancer.controller:main",
         ],
     },
