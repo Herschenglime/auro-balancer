@@ -21,7 +21,7 @@ setup(
         "console_scripts": [
             "dist_publisher = auro_balancer.dist_publisher:main",
             "imu_publisher = auro_balancer.imu_publisher:main",
-            "controller = auro_balancer.controller:main",
+            "servo_controller = auro_balancer.servo_controller:main",
         ],
     },
 )
