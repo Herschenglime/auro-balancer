@@ -1,0 +1,22 @@
+%YAML 1.2
+---
+launch:
+  - node:
+      pkg: "auro_balancer"
+      exec: "servo_controller"
+      name: "servo"
+
+  - node:
+      pkg: "auro_balancer"
+      exec: "dist_publisher"
+      name: "dist"
+
+  - node:
+      pkg: "auro_balancer"
+      exec: "imu_publisher"
+      name: "imu"
+
+  - node:
+      pkg: "auro_balancer"
+      exec: "kalman_pid"
+      name: "pid"

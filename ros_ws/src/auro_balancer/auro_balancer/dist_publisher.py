@@ -14,6 +14,8 @@ import threading
 import time
 # import numpy as np
 
+from auro_balancer.utils import wait_for_i2c_ready
+
 
 class DistPublisher(Node):
     def __init__(self):
@@ -21,6 +23,7 @@ class DistPublisher(Node):
         self.publisher_ = self.create_publisher(Int16, "dist_mm", 10)
 
         # setup distance sensor device
+        wait_for_i2c_ready()
         self.i2c = busio.I2C(board.SCL, board.SDA)
         self.vl53 = adafruit_vl53l0x.VL53L0X(self.i2c)
 
@@ -40,7 +43,7 @@ class DistPublisher(Node):
             self.get_logger().info(f"Distance: {distance} mm")
 
             # Sleep a little bit to avoid spamming CPU
-            time.sleep(0.001)  # 10ms sleep; adjust based on sensor update speed
+            time.sleep(0.01)  # 10ms sleep; adjust based on sensor update speed
 
     def destroy_node(self):
         self.running = False
