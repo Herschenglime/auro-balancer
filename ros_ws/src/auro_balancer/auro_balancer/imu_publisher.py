@@ -39,7 +39,7 @@ class IMUPublisher(Node):
     def __init__(self):
         super().__init__("imu_publisher")
         # publish an array with the current angular velocity *and* an estimated absolute angle
-        self.publisher_ = self.create_publisher(Float64MultiArray, "dps_deg", 10)
+        # self.publisher_ = self.create_publisher(Float64MultiArray, "dps_deg", 10)
 
         # use the built-in vector3 type to publish the x, y, and z for both degrees and angle
         self.gyro_publisher = self.create_publisher(Vector3, "gyro_dps", 10)

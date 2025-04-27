@@ -22,6 +22,7 @@ setup(
             "dist_publisher = auro_balancer.dist_publisher:main",
             "imu_publisher = auro_balancer.imu_publisher:main",
             "servo_controller = auro_balancer.servo_controller:main",
+            "kalman_pid = auro_balancer.kalman_pid:main",
         ],
     },
 )

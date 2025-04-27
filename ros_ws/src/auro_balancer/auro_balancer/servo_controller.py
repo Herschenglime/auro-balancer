@@ -31,6 +31,7 @@ class ServoController(Node):
 
     def listener_callback(self, msg):
         self.servo.angle = msg.data
+
         self.get_logger().info(f"Setting servo to angle: {msg.data} °")
 
 
