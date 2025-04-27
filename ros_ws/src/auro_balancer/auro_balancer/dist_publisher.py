@@ -8,6 +8,10 @@ from std_msgs.msg import String
 import board
 import busio
 import adafruit_vl53l0x
+
+# python imports
+import threading
+import time
 # import numpy as np
 
 
@@ -15,9 +19,6 @@ class DistPublisher(Node):
     def __init__(self):
         super().__init__("dist_publisher")
         self.publisher_ = self.create_publisher(String, "topic", 10)
-        timer_period = 0.5  # seconds
-        self.timer = self.create_timer(timer_period, self.timer_callback)
-        self.i = 0
 
         # setup distance sensor device
         self.i2c = busio.I2C(board.SCL, board.SDA)
@@ -25,12 +26,26 @@ class DistPublisher(Node):
 
         # start = np.array([])
 
-    def timer_callback(self):
-        msg = String()
-        msg.data = "Distance: %dmm" % self.vl53.range
-        self.publisher_.publish(msg)
-        self.get_logger().info('Publishing: "%s"' % msg.data)
-        self.i += 1
+        # setup a thread to continuously poll in the background
+        self.running = True
+        self.publish_thread = threading.Thread(target=self.publish_distance_loop)
+        self.publish_thread.start()
+
+    def publish_distance_loop(self):
+        while self.running:
+            distance = self.vl53.range
+            msg = String()
+            msg.data = f"Distance: {distance} mm"
+            self.publisher_.publish(msg)
+            self.get_logger().info('Publishing: "%s"' % msg.data)
+
+            # Sleep a little bit to avoid spamming CPU
+            time.sleep(0.001)  # 10ms sleep; adjust based on sensor update speed
+
+    def destroy_node(self):
+        self.running = False
+        self.publish_thread.join()
+        super().destroy_node()
 
 
 def main(args=None):
