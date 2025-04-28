@@ -43,7 +43,7 @@ class IMUPublisher(Node):
 
         # use the built-in vector3 type to publish the x, y, and z for both degrees and angle
         self.gyro_publisher = self.create_publisher(Vector3, "gyro_dps", 10)
-        self.accel_publisher = self.create_publisher(Vector3, "accel_mps2", 10)
+        self.accel_publisher = self.create_publisher(Vector3, "accel_g", 10)
 
         self.bus = smbus2.SMBus(I2C_BUS)
 
