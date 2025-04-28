@@ -102,7 +102,7 @@ class IMUPublisher(Node):
             # )
 
             # Sleep a little bit to avoid spamming CPU
-            time.sleep(dt)  # 10ms sleep; adjust based on sensor update speed
+            # time.sleep(dt)  # 10ms sleep; adjust based on sensor update speed
 
     def destroy_node(self):
         self.running = False

@@ -82,9 +82,13 @@ class KalmanPID(Node):
             # don't do anything until sensors is ready
             return
 
-        self.get_logger().info(f"latest dist is {self.latest_dist} mm")
-        self.get_logger().info(f"gyro is {self.latest_gyro_dps} deg/s")
-        self.get_logger().info(f"accel is {self.latest_accel_mps2} m/s^2")
+        self.get_logger().info(f"latest dist: {self.latest_dist} mm")
+
+        # from observation, z points up, y points perpendicularly out of the contraption
+        self.get_logger().info(
+            f"Gyro (°/s): ({self.latest_gyro_dps.x:.2f}, {self.latest_gyro_dps.y:.2f}, {self.latest_gyro_dps.z:.2f}) | "
+            f"Accel (m/s²): ({self.latest_accel_mps2.x:.2f}, {self.latest_accel_mps2.y:.2f}, {self.latest_accel_mps2.z:.2f})"
+        )
 
         # get actual time for more accurate timing calculations
         curr_time = self.get_clock().now()
@@ -128,7 +132,7 @@ class KalmanPID(Node):
         servo_msg = Float64()
         servo_msg.data = total
 
-        self.servo_publisher.publish(servo_msg)
+        self.servo_publisher.publish(self.zero_angle_msg)
 
 
 def main(args=None):
