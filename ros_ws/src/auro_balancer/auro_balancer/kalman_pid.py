@@ -15,7 +15,10 @@ G = 9.81  # m/s^2, used to convert accel
 
 # control gain matrix - calculated for poles with external script
 # limit to 20% for now for debugging
-K = 0.25 * np.array([0.76, 1.96, 17.75, 7.0])
+# K = 0.25 * np.array([0.76, 1.96, 17.75, 7.0])
+
+KP = 0.25  # proportional: a positive angle moves the ball away from the sensor, so proportinally tilt in the other direction
+KD = 0.05  # derivative: account for velocity of ball in control equation
 
 
 # take in sensor data, perform filtering and PID controls, then set to cotnroller
@@ -44,6 +47,14 @@ class KalmanPID(Node):
         # state variables
         self.latest_dist = None
         self.latest_gyro_dps = None
+        self.dist_prev_err = 0.0  # assume no previous distance error for initial case
+
+        # store previous distance values to smooth with moving average
+        self.dist_buffer = []
+        self.buf_size = 3  # moving average window size
+        self.deadband_mm = 2.0  # if within 2 mm, stop fiddling the motor
+
+        # for control state stuff
         self.latest_accel = None
         self.prev_dist = None
         self.ball_velocity = 0.0
@@ -75,7 +86,14 @@ class KalmanPID(Node):
         # self.control_timer = self.create_timer(CONTROL_PERIOD, self.control_loop)
 
     def dist_callback(self, msg):
-        self.latest_dist = msg.data
+        # update buffer
+        self.dist_buffer.append(msg.data)
+        if len(self.dist_buffer) > self.buf_size:
+            self.dist_buffer.pop(0)
+
+        # smooth distance with moving average
+        self.latest_dist = sum(self.dist_buffer) / len(self.dist_buffer)
+
         # rerun control loop when each piece of distance data comes in
         self.control_loop()
 
@@ -115,72 +133,38 @@ class KalmanPID(Node):
 
         self.get_logger().info(f"time difference is {dt} s")
 
-        ### implement state space control code ###
-        # ball pos relative to center
-        ball_pos = self.latest_dist - SET_POINT_MM
+        # implement pid code
+        dist_err = SET_POINT_MM - self.latest_dist
+        self.get_logger().info(f"err is {dist_err} mm")
 
-        # estimate velocity w/ position difference (assuming we have previous measured already)
-        if self.prev_dist is not None:
-            self.ball_velocity = (self.latest_dist - self.prev_dist) / dt  # in mm/s
+        # calculate proportional part
+        p = KP * dist_err
+        self.get_logger().info(f"p is {p}")
 
-        # record last dist for next time
-        self.prev_dist = self.latest_dist
+        # calculate derivative part
+        dist_diff = dist_err - self.dist_prev_err
 
-        # use accelerometer to estimate current rail tilt
-        # z is vertically up, y is to right along rail, and x faces towards user
-        accel_x = self.latest_accel.x
-        accel_y = self.latest_accel.y
-        accel_z = self.latest_accel.z
+        d = KD * (dist_diff / dt)
+        self.get_logger().info(f"d is {d}")
 
-        # we can't rely on accelerometer to get absolute rail theta because the movement of the rail
-        # affects it. apply a complementary filter to trust gyro more
+        # add up final pid calculation
+        total = p + d
+        self.get_logger().info(f"total is {total}")
 
-        # Tilt from accelerometer (radians)
-        theta_accel = np.arctan2(accel_y, accel_z)
+        # clamp total
+        if total < -90:
+            total = -90.0
+        if total > 90:
+            total = 90.0
 
-        # Gyro angular velocity (convert deg/s to rad/s)
-        gyro_rate = np.deg2rad(self.latest_gyro_dps.x)
-
-        # Complementary filter
-        alpha = 0.98  # High trust in gyro for short-term
-        self.rail_theta = (
-            alpha * (self.rail_theta + gyro_rate * dt) + (1 - alpha) * theta_accel
-        )
-
-        # also estimate angular velocity - rail rotates along x axis
-        # (convert to radians for easier physics)
-        self.rail_theta_dot = np.deg2rad(self.latest_gyro_dps.x)
-
-        # create state vector (a la kalman stuff)
-        x_vec = np.array(
-            [
-                ball_pos / 1000.0,  # convert mm to meters
-                self.ball_velocity / 1000.0,  # convert mm/s to m/s
-                self.rail_theta,
-                self.rail_theta_dot,
-            ]
-        )
-
-        # control law (thanks Quintin!) u = -Kx
-        u = -np.dot(K, x_vec)  # K is also a vector of control params, so this is scalar
-
-        # clamp servo angle to be within it's operating range (that we set in servo controller)
-        u_deg = np.clip(np.rad2deg(u), -90.0, 90.0)
-
-        # negative servo angle makes positive rail tilt, so invert
-        u_deg = -u_deg
+        # capture previous error
+        self.dist_prev_err = dist_err
 
         # publish to servo
         servo_msg = Float64()
-        servo_msg.data = u_deg
-        self.servo_publisher.publish(servo_msg)
+        servo_msg.data = total
 
-        # log measured quantities
-        self.get_logger().info(
-            f"Ball pos: {ball_pos:.2f}mm, Ball vel: {self.ball_velocity:.2f}mm/s, "
-            f"Rail θ: {np.degrees(self.rail_theta):.2f}°, Rail θ̇: {np.degrees(self.rail_theta_dot):.2f}°/s, "
-            f"Servo: {u_deg:.2f}°"
-        )
+        self.servo_publisher.publish(servo_msg)
 
 
 def main(args=None):
