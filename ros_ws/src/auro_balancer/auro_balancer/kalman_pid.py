@@ -15,7 +15,7 @@ G = 9.81  # m/s^2, used to convert accel
 
 # control gain matrix - calculated for poles with external script
 # limit to 20% for now for debugging
-K = np.array([0.76, 1.96, 17.75, 7.0])
+K = 0.25 * np.array([0.76, 1.96, 17.75, 7.0])
 
 
 # take in sensor data, perform filtering and PID controls, then set to cotnroller
@@ -70,11 +70,14 @@ class KalmanPID(Node):
         # get last time for more accurate timing measurements
         self.last_time = self.get_clock().now()
 
-        # begin timing loop for pid controller
-        self.control_timer = self.create_timer(CONTROL_PERIOD, self.control_loop)
+        # timer had stale distance data, only update based on when new distance comes in
+        # # begin timing loop for pid controller
+        # self.control_timer = self.create_timer(CONTROL_PERIOD, self.control_loop)
 
     def dist_callback(self, msg):
         self.latest_dist = msg.data
+        # rerun control loop when each piece of distance data comes in
+        self.control_loop()
 
     def gyro_callback(self, msg):
         self.latest_gyro_dps = msg
