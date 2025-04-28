@@ -43,12 +43,9 @@ class IMUPublisher(Node):
 
         # use the built-in vector3 type to publish the x, y, and z for both degrees and angle
         self.gyro_publisher = self.create_publisher(Vector3, "gyro_dps", 10)
-        self.angle_publisher = self.create_publisher(Vector3, "absolute_angle", 10)
+        self.accel_publisher = self.create_publisher(Vector3, "accel_mps2", 10)
 
         self.bus = smbus2.SMBus(I2C_BUS)
-
-        # internal absolute angle (in degrees)
-        self.abs_ang = (0, 0, 0)
 
         # --- Init sequence ---
         # Confirm chip ID
@@ -63,7 +60,9 @@ class IMUPublisher(Node):
         time.sleep(0.1)
 
         # Enable accelerometer: 104 Hz, ±2g
-        # bus.write_byte_data(ISM_ADDR, CTRL1_XL, 0x40)  # ODR_XL = 104 Hz, FS_XL = ±2g
+        self.bus.write_byte_data(
+            ISM_ADDR, CTRL1_XL, 0x40
+        )  # ODR_XL = 104 Hz, FS_XL = ±2g
         # Enable gyro: 104 Hz, 250 dps
         self.bus.write_byte_data(
             ISM_ADDR, CTRL2_G, 0x40
@@ -76,38 +75,27 @@ class IMUPublisher(Node):
 
     def publish_gyro_loop(self):
         while self.running:
-            # distance = self.vl53.range
-            # msg = String()
-            # msg.data = f"Distance: {distance} mm"
-            # self.publisher_.publish(msg)
-            # self.get_logger().info('Publishing: "%s"' % msg.data)
-
-            # read gyro data
-
             dt = 0.001
+            # read imu data
 
-            # accel = read_sensor_data(OUTX_L_A)
-
+            accel = self.read_sensor_data(OUTX_L_A)
             gyro = self.read_sensor_data(OUTX_L_G)
 
             # Convert to physical units (approximate)
-            # accel_g = tuple(a / 16384 for a in accel)  # 2g scale → 16384 LSB/g
+            accel_g = tuple(a / 16384 for a in accel)  # 2g scale → 16384 LSB/g
             gyro_dps = tuple(g / 131 for g in gyro)  # 250 dps → 131 LSB/dps
-
-            # calcualte current absolute angle based on gyro reading for each axis
-            self.abs_ang = tuple(abs + g * dt for abs, g in zip(self.abs_ang, gyro_dps))
 
             gyro_msg = Vector3()
             gyro_msg.x, gyro_msg.y, gyro_msg.z = gyro_dps
 
-            angle_msg = Vector3()
-            angle_msg.x, angle_msg.y, angle_msg.z = self.abs_ang
+            accel_msg = Vector3()
+            accel_msg.x, accel_msg.y, accel_msg.z = accel_g
 
             self.gyro_publisher.publish(gyro_msg)
-            self.angle_publisher.publish(angle_msg)
+            self.accel_publisher.publish(accel_msg)
 
-            gyro_str = ", ".join(f"{g:.2f}" for g in gyro_dps)
-            angle_str = ", ".join(f"{a:.2f}" for a in self.abs_ang)
+            # gyro_str = ", ".join(f"{g:.2f}" for g in gyro_fsps)
+            # angle_str = ", ".join(f"{a:.2f}" for a in accel_g)
 
             # self.get_logger().info(
             #     f"Gyro (°/s): ({gyro_str}) | Derived Angle: ({angle_str})"

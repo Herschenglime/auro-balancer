@@ -43,7 +43,7 @@ class DistPublisher(Node):
             # self.get_logger().info(f"Distance: {distance} mm")
 
             # Sleep a little bit to avoid spamming CPU
-            time.sleep(0.01)  # 10ms sleep; adjust based on sensor update speed
+            # time.sleep(0.01)  # 10ms sleep; adjust based on sensor update speed
 
     def destroy_node(self):
         self.running = False

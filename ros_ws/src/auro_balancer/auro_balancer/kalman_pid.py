@@ -7,11 +7,10 @@ from geometry_msgs.msg import Vector3
 import time
 
 # constants
-SET_POINT = 95  # mm
-# KP = 0.5  # proportional: a positive angle moves the ball away from the sensor, so proportinally tilt in the other direction
-KP = 0.0  # proportional: a positive angle moves the ball away from the sensor, so proportinally tilt in the other direction
-KD = 0.1  # derivative: account for velocity of ball in control equation
-dt = 0.01
+SET_POINT = 90  # mm
+KP = 0.25  # proportional: a positive angle moves the ball away from the sensor, so proportinally tilt in the other direction
+KD = 0.05  # derivative: account for velocity of ball in control equation
+CONTROL_PERIOD = 0.02
 
 
 # take in sensor data, perform filtering and PID controls, then set to cotnroller
@@ -32,14 +31,20 @@ class KalmanPID(Node):
         )
         self.gyro_sub  # prevent unused variable warning
 
+        self.accel_sub = self.create_subscription(
+            Vector3, "accel_mps2", self.accel_callback, 10
+        )
+        self.accel_sub  # prevent unused variable warning
+
         self.latest_dist = None
         self.latest_gyro_dps = None
+        self.latest_accel_mps2 = None
         self.dist_prev_err = 0.0  # assume no previous distance error for initial case
 
         # handle publishing of data
         self.servo_publisher = self.create_publisher(Float64, "servo_angle", 10)
 
-        # set motor to middle position and reset gyro to "zero out" measured angle
+        # set motor to middle position to begin
         self.zero_angle_msg = Float64()
         self.zero_angle_msg.data = 0.0
         self.servo_publisher.publish(self.zero_angle_msg)
@@ -53,8 +58,11 @@ class KalmanPID(Node):
 
         self.get_logger().info("Control loop starting now.")
 
+        # get last time for more accurate timing measurements
+        self.last_time = self.get_clock().now()
+
         # begin timing loop for pid controller
-        self.control_timer = self.create_timer(dt, self.control_loop)
+        self.control_timer = self.create_timer(CONTROL_PERIOD, self.control_loop)
 
     def dist_callback(self, msg):
         self.latest_dist = msg.data
@@ -62,12 +70,33 @@ class KalmanPID(Node):
     def gyro_callback(self, msg):
         self.latest_gyro_dps = msg
 
+    def accel_callback(self, msg):
+        self.latest_accel_mps2 = msg
+
     def control_loop(self):
-        if self.latest_dist is None:
-            # don't do anything until distance is ready
+        if (
+            self.latest_dist is None
+            or self.latest_gyro_dps is None
+            or self.latest_accel_mps2 is None
+        ):
+            # don't do anything until sensors is ready
             return
 
         self.get_logger().info(f"latest dist is {self.latest_dist} mm")
+        self.get_logger().info(f"gyro is {self.latest_gyro_dps} deg/s")
+        self.get_logger().info(f"accel is {self.latest_accel_mps2} m/s^2")
+
+        # get actual time for more accurate timing calculations
+        curr_time = self.get_clock().now()
+
+        # get higher resolution time description
+        dt = (curr_time - self.last_time).nanoseconds / 1e9
+        if dt <= 0.0:
+            dt = CONTROL_PERIOD
+
+        self.last_time = curr_time
+
+        self.get_logger().info(f"time difference is {dt} s")
 
         # implement pid code
         dist_err = SET_POINT - self.latest_dist
@@ -80,7 +109,7 @@ class KalmanPID(Node):
         # calculate derivative part
         dist_diff = dist_err - self.dist_prev_err
 
-        d = KD * (dist_diff / dt)
+        d = KD * (dist_diff / CONTROL_PERIOD)
         self.get_logger().info(f"d is {d}")
 
         # add up final pid calculation
