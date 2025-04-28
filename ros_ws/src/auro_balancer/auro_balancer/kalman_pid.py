@@ -113,13 +113,13 @@ class KalmanPID(Node):
             # don't do anything until sensors is ready
             return
 
-        self.get_logger().info(f"latest dist: {self.latest_dist} mm")
+        # self.get_logger().info(f"latest dist: {self.latest_dist} mm")
 
         # from observation, z points up, x points perpendicularly out of the contraption and is what gets tilted
-        self.get_logger().info(
-            f"Gyro (°/s): ({self.latest_gyro_dps.x:.2f}, {self.latest_gyro_dps.y:.2f}, {self.latest_gyro_dps.z:.2f}) | "
-            f"Accel (m/s²): ({self.latest_accel.x:.2f}, {self.latest_accel.y:.2f}, {self.latest_accel.z:.2f})"
-        )
+        # self.get_logger().info(
+        #     f"Gyro (°/s): ({self.latest_gyro_dps.x:.2f}, {self.latest_gyro_dps.y:.2f}, {self.latest_gyro_dps.z:.2f}) | "
+        #     f"Accel (m/s²): ({self.latest_accel.x:.2f}, {self.latest_accel.y:.2f}, {self.latest_accel.z:.2f})"
+        # )
 
         # get actual time for more accurate timing calculations
         curr_time = self.get_clock().now()
@@ -131,25 +131,25 @@ class KalmanPID(Node):
 
         self.last_time = curr_time
 
-        self.get_logger().info(f"time difference is {dt} s")
+        # self.get_logger().info(f"time difference is {dt} s")
 
         # implement pid code
         dist_err = SET_POINT_MM - self.latest_dist
-        self.get_logger().info(f"err is {dist_err} mm")
+        # self.get_logger().info(f"err is {dist_err} mm")
 
         # calculate proportional part
         p = KP * dist_err
-        self.get_logger().info(f"p is {p}")
+        # self.get_logger().info(f"p is {p}")
 
         # calculate derivative part
         dist_diff = dist_err - self.dist_prev_err
 
         d = KD * (dist_diff / dt)
-        self.get_logger().info(f"d is {d}")
+        # self.get_logger().info(f"d is {d}")
 
         # add up final pid calculation
         total = p + d
-        self.get_logger().info(f"total is {total}")
+        # self.get_logger().info(f"total is {total}")
 
         # clamp total
         if total < -90:
