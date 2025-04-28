@@ -17,8 +17,8 @@ G = 9.81  # m/s^2, used to convert accel
 # limit to 20% for now for debugging
 # K = 0.25 * np.array([0.76, 1.96, 17.75, 7.0])
 
-KP = 0.25  # proportional: a positive angle moves the ball away from the sensor, so proportinally tilt in the other direction
-KD = 0.05  # derivative: account for velocity of ball in control equation
+KP = 0.4  # proportional: a positive angle moves the ball away from the sensor, so proportinally tilt in the other direction
+KD = 0.25  # derivative: account for velocity of ball in control equation
 
 
 # take in sensor data, perform filtering and PID controls, then set to cotnroller
@@ -51,7 +51,7 @@ class KalmanPID(Node):
 
         # store previous distance values to smooth with moving average
         self.dist_buffer = []
-        self.buf_size = 3  # moving average window size
+        self.buf_size = 4  # moving average window size
         self.deadband_mm = 2.0  # if within 2 mm, stop fiddling the motor
 
         # for control state stuff
@@ -156,6 +156,10 @@ class KalmanPID(Node):
             total = -90.0
         if total > 90:
             total = 90.0
+
+        # deadband small control changes
+        if abs(total) < 2.0:  # if motor command < 1 degree, ignore
+            total = 0.0
 
         # capture previous error
         self.dist_prev_err = dist_err
