@@ -8,7 +8,10 @@ import time
 
 # constants
 SET_POINT = 95  # mm
-KP = 0.5  # proportional: a positive angle moves the ball away from the sensor, so proportinally tilt in the other direction
+# KP = 0.5  # proportional: a positive angle moves the ball away from the sensor, so proportinally tilt in the other direction
+KP = 0.0  # proportional: a positive angle moves the ball away from the sensor, so proportinally tilt in the other direction
+KD = 0.1  # derivative: account for velocity of ball in control equation
+dt = 0.01
 
 
 # take in sensor data, perform filtering and PID controls, then set to cotnroller
@@ -31,6 +34,7 @@ class KalmanPID(Node):
 
         self.latest_dist = None
         self.latest_gyro_dps = None
+        self.dist_prev_err = 0.0  # assume no previous distance error for initial case
 
         # handle publishing of data
         self.servo_publisher = self.create_publisher(Float64, "servo_angle", 10)
@@ -50,7 +54,7 @@ class KalmanPID(Node):
         self.get_logger().info("Control loop starting now.")
 
         # begin timing loop for pid controller
-        self.control_timer = self.create_timer(0.01, self.control_loop)
+        self.control_timer = self.create_timer(dt, self.control_loop)
 
     def dist_callback(self, msg):
         self.latest_dist = msg.data
@@ -63,14 +67,25 @@ class KalmanPID(Node):
             # don't do anything until distance is ready
             return
 
+        self.get_logger().info(f"latest dist is {self.latest_dist} mm")
+
         # implement pid code
         dist_err = SET_POINT - self.latest_dist
+        self.get_logger().info(f"err is {dist_err} mm")
 
         # calculate proportional part
         p = KP * dist_err
+        self.get_logger().info(f"p is {p}")
+
+        # calculate derivative part
+        dist_diff = dist_err - self.dist_prev_err
+
+        d = KD * (dist_diff / dt)
+        self.get_logger().info(f"d is {d}")
 
         # add up final pid calculation
-        total = p
+        total = p + d
+        self.get_logger().info(f"total is {total}")
 
         if total < -90:
             total = -90.0

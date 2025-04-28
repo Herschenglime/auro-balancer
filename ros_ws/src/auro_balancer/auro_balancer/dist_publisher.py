@@ -40,7 +40,7 @@ class DistPublisher(Node):
             msg = Int16()
             msg.data = distance
             self.publisher_.publish(msg)
-            self.get_logger().info(f"Distance: {distance} mm")
+            # self.get_logger().info(f"Distance: {distance} mm")
 
             # Sleep a little bit to avoid spamming CPU
             time.sleep(0.01)  # 10ms sleep; adjust based on sensor update speed
