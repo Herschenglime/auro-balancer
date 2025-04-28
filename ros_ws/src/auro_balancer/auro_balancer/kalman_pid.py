@@ -14,7 +14,8 @@ CONTROL_PERIOD = 0.02
 G = 9.81  # m/s^2, used to convert accel
 
 # control gain matrix - calculated for poles with external script
-K = np.array([45.9, 22.6, 78.7, 20.5])
+# limit to 20% for now for debugging
+K = np.array([7.13, 10.23, 52.75, 12])
 
 
 # take in sensor data, perform filtering and PID controls, then set to cotnroller
@@ -125,11 +126,23 @@ class KalmanPID(Node):
         # use accelerometer to estimate current rail tilt
         # z is vertically up, y is to right along rail, and x faces towards user
         accel_x = self.latest_accel.x
-        accel_z = self.latest_accel.y
-        # y shouldn't change, so we ignore
+        accel_y = self.latest_accel.y
+        accel_z = self.latest_accel.z
 
-        # get angle of rail in radians based on acceleration
-        self.rail_theta = np.arctan2(accel_x, accel_z)
+        # we can't rely on accelerometer to get absolute rail theta because the movement of the rail
+        # affects it. apply a complementary filter to trust gyro more
+
+        # Tilt from accelerometer (radians)
+        theta_accel = np.arctan2(accel_y, accel_z)
+
+        # Gyro angular velocity (convert deg/s to rad/s)
+        gyro_rate = np.deg2rad(self.latest_gyro_dps.x)
+
+        # Complementary filter
+        alpha = 0.98  # High trust in gyro for short-term
+        self.rail_theta = (
+            alpha * (self.rail_theta + gyro_rate * dt) + (1 - alpha) * theta_accel
+        )
 
         # also estimate angular velocity - rail rotates along x axis
         # (convert to radians for easier physics)
@@ -150,6 +163,9 @@ class KalmanPID(Node):
 
         # clamp servo angle to be within it's operating range (that we set in servo controller)
         u_deg = np.clip(np.rad2deg(u), -90.0, 90.0)
+
+        # negative servo angle makes positive rail tilt, so invert
+        u_deg = -u_deg
 
         # publish to servo
         servo_msg = Float64()
