@@ -10,7 +10,7 @@ A = np.array([[0, 1, 0, 0], [0, 0, g, 0], [0, 0, 0, 1], [0, 0, 0, 0]])
 B = np.array([[0], [0], [0], [1]])
 
 # Desired closed-loop poles
-desired_poles = np.array([-2.0, -2.5, -3.5, -4])
+desired_poles = np.array([-1.0, -1.5, -2.0, -2.5])
 
 # Place the poles
 place_obj = place_poles(A, B, desired_poles)

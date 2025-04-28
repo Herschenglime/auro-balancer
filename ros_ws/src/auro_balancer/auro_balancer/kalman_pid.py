@@ -15,7 +15,7 @@ G = 9.81  # m/s^2, used to convert accel
 
 # control gain matrix - calculated for poles with external script
 # limit to 20% for now for debugging
-K = np.array([7.13, 10.23, 52.75, 12])
+K = np.array([0.76, 1.96, 17.75, 7.0])
 
 
 # take in sensor data, perform filtering and PID controls, then set to cotnroller
