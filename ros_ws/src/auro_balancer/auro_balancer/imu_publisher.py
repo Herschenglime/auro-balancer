@@ -109,9 +109,9 @@ class IMUPublisher(Node):
             gyro_str = ", ".join(f"{g:.2f}" for g in gyro_dps)
             angle_str = ", ".join(f"{a:.2f}" for a in self.abs_ang)
 
-            self.get_logger().info(
-                f"Gyro (°/s): ({gyro_str}) | Derived Angle: ({angle_str})"
-            )
+            # self.get_logger().info(
+            #     f"Gyro (°/s): ({gyro_str}) | Derived Angle: ({angle_str})"
+            # )
 
             # Sleep a little bit to avoid spamming CPU
             time.sleep(dt)  # 10ms sleep; adjust based on sensor update speed
