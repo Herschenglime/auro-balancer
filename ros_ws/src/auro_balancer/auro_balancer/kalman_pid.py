@@ -19,6 +19,7 @@ G = 9.81  # m/s^2, used to convert accel
 
 KP = 0.4  # proportional: a positive angle moves the ball away from the sensor, so proportinally tilt in the other direction
 KD = 0.25  # derivative: account for velocity of ball in control equation
+KI = 0.025  # integral - when very close to set point, integrate over time to nudge ball to right position
 
 
 # take in sensor data, perform filtering and PID controls, then set to cotnroller
@@ -48,13 +49,14 @@ class KalmanPID(Node):
         self.latest_dist = None
         self.latest_gyro_dps = None
         self.dist_prev_err = 0.0  # assume no previous distance error for initial case
+        self.i = 0.0
 
         # store previous distance values to smooth with moving average
         self.dist_buffer = []
         self.buf_size = 4  # moving average window size
         self.deadband_mm = 2.0  # if within 2 mm, stop fiddling the motor
 
-        # for control state stuff
+        # for control state stuff (currently unused)
         self.latest_accel = None
         self.prev_dist = None
         self.ball_velocity = 0.0
@@ -147,8 +149,11 @@ class KalmanPID(Node):
         d = KD * (dist_diff / dt)
         # self.get_logger().info(f"d is {d}")
 
+        # get i, only if within small radius of setpoint (nudge to center if stopped)
+        self.i = self.i + (KI * dist_err) if (abs(dist_err) < 5) else 0.0
+
         # add up final pid calculation
-        total = p + d
+        total = p + d + self.i
         # self.get_logger().info(f"total is {total}")
 
         # clamp total
