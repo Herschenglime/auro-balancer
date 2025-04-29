@@ -4,19 +4,29 @@ This github repo holds the code and various documentation scraps for our EEL4930
 
 Self link: https://github.com/Herschenglime/auro-balancer
 
+![full picture](images/contraption.jpg)
+
 ## Video Link
 
 ## Hardware Setup
 Most of the components of the setup were 3D printed; they consisted of a base, a roughly 200mm-long track, a servo holder, a disc, and 2 interconnecting caps to transfer the force from the servo to one end of the track.
 
-Other components included a flat strip of cardboard that the base and the servo holder were attached to with double-sided tape and a cut "barbecue stick" to transfer the torque from the motor into the end of the track for tilt. The ball that was balanced was a standard ping-pong ball, which simplified the dynamics of the system.
+Other components included a flat strip of cardboard that the base and the servo holder were attached to with double-sided tape and a cut "barbecue stick" to transfer the torque from the motor into the end of the track for tilt. The servo also needed to be lifted a bit higher off of the cardboard for the disc to rotate properly, so it was affixed to a small piece of scrap wood. The ball that was balanced was a standard ping-pong ball, which simplified the dynamics of the system.
+
+
+![raspberry pi](images/pi.jpg)
 
 The main "brain" of our controller was a [Raspberry Pi 400](https://www.raspberrypi.com/products/raspberry-pi-400/) running ROS 24.04 (Jazzy Jalisco) on Ubuntu installed on a USB stick. 
+
+
+![distance sensor](images/dist_sensor.jpg)
+![IMU](images/imu.jpg)
 
 To collect data about the state of the system, an [Adafruit VL53L0X distance sensor](https://learn.adafruit.com/adafruit-vl53l0x-micro-lidar-distance-sensor-breakout) was taped to the right of the track. For additional data, a [SparkFun IMU/Magnetometer unit](https://www.sparkfun.com/sparkfun-6dof-imu-breakout-ism330dhcx-qwiic.html#documentation) was taped under the left of the track so that the z axis aligned with the pillar on the base and the y axis pointed down the track. Both of these communicated with the Raspberry Pi over I2C, connected through a breadboard. 
 
 A MG90S servo was used to move the rail. It was controlled by PWM from the RPi using the gpiozero and pigpio libraries. It was powered externally with 5V through an Elegoo power module connected to a 9V "wall wart." The power module also supplied 3.3V to the sensors. The grounds of the RPi and the power module were connected.
 
+![breadboard wiring](images/wiring.jpg)
 Everything was wired together using a small breadboard.
 
 ## ROS Structure
