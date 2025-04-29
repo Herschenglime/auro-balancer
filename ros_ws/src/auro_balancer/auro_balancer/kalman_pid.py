@@ -8,7 +8,7 @@ import time
 import numpy as np
 
 # constants
-SET_POINT_MM = 90  # mm
+SET_POINT_MM = 92  # mm
 CONTROL_PERIOD = 0.02
 
 G = 9.81  # m/s^2, used to convert accel
@@ -19,7 +19,7 @@ G = 9.81  # m/s^2, used to convert accel
 
 KP = 0.4  # proportional: a positive angle moves the ball away from the sensor, so proportinally tilt in the other direction
 KD = 0.25  # derivative: account for velocity of ball in control equation
-KI = 0.025  # integral - when very close to set point, integrate over time to nudge ball to right position
+KI = 0.05  # integral - when very close to set point, integrate over time to nudge ball to right position
 
 
 # take in sensor data, perform filtering and PID controls, then set to cotnroller
@@ -162,9 +162,14 @@ class KalmanPID(Node):
         if total > 90:
             total = 90.0
 
+
         # deadband small control changes
         if abs(total) < 2.0:  # if motor command < 1 degree, ignore
             total = 0.0
+
+        if (abs(total) < 10 and dist_diff*dt < 5):
+             total = 0.0
+             self.get_logger().info("working\n")
 
         # capture previous error
         self.dist_prev_err = dist_err
