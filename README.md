@@ -7,6 +7,7 @@ Self link: https://github.com/Herschenglime/auro-balancer
 ![full picture](images/contraption.jpg)
 
 ## Video Link
+https://youtu.be/n2TGsTVSxw0?si=552na6O2u0czWiuX
 
 ## Hardware Setup
 Most of the components of the setup were 3D printed; they consisted of a base, a roughly 200mm-long track, a servo holder, a disc, and 2 interconnecting caps to transfer the force from the servo to one end of the track.
